@@ -18,7 +18,11 @@ class PostController extends Controller
     {
         return view('posts.create');
     }
-
+    public function edit($id)
+    {
+        $post = Post::with('images')->findOrFail($id);
+        return view('posts.edit', compact('post'));
+    }
     public function store(Request $request)
     {
         $request->validate([
@@ -48,6 +52,39 @@ class PostController extends Controller
         $post = Post::with('images')->findOrFail($id);
         return view('posts.show', compact('post'));
     }
+    public function update(Request $request, $id)
+{
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
+
+    $post = Post::findOrFail($id);
+
+    foreach ($post->images as $image) {
+        if (file_exists(public_path('uploads/' . $image->image))) {
+            unlink(public_path('uploads/' . $image->image)); // Public folder থেকে ডিলেট
+        }
+         $image->delete(); // Database থেকে ডিলেট
+    }
+
+
+
+      // নতুন ইমেজ আপলোড
+    if ($request->hasFile('images')) {
+        foreach ($request->file('images') as $file) {
+            $filename = time() . '-' . $file->getClientOriginalName();
+            $file->move(public_path('uploads'), $filename);
+
+            Image::create([
+                'post_id' => $post->id,
+                'image' => $filename,
+            ]);
+        }
+    }
+
+    return redirect()->route('posts.index')->with('success', 'Post updated successfully.');
+}
 
     public function destroy($id)
     {

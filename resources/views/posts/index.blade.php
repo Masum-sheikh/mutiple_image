@@ -18,6 +18,7 @@
 
                 </div>
                 <form action="{{ route('posts.destroy', $post->id) }}" method="POST">
+                    <a href="{{ route('posts.edit', $post->id) }}">edit</a>
                     @csrf
                     @method('DELETE')
                     <button type="submit">Delete</button>
